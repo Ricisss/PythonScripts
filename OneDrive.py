@@ -5,6 +5,7 @@ import os
 import msal
 import requests
 import shutil
+import time
 from tqdm.auto import tqdm
 from tqdm.utils import CallbackIOWrapper
 
@@ -55,15 +56,15 @@ def uploadFile(file_path, file_name):
         url = GRAPH_API_ENDPOINT + f"/me/drive/items/root:/{remote_folder_name}/{file_name}:/content"
         file_size = os.path.getsize(os.path.join(file_path, file_name))
         headers = {
-            "Authorization": "bearer " + generate_access_token(APP_ID, SCOPES)['access_token'],
+            "Authorization": "bearer " + generate_access_token(SCOPES)['access_token'],
                 'Content-Length': str(file_size)
             }
         with open(os.path.join(file_path, file_name), 'rb') as f:
             with tqdm(desc=f"Uploading {file_name}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as t:
                 reader_wrapper = CallbackIOWrapper(t.update, f, "read")
                 requests.put(url, headers=headers, data=reader_wrapper)
-    except:
-         print(f"An exception occurred while trying to upload file : {file_name}")
+    except Exception as e:
+        print(e)
 
             
 def downloadFile(file_id, save_location):
@@ -89,3 +90,77 @@ def downloadFile(file_id, save_location):
             with open(os.path.join(save_location, file_name), 'wb') as output:
                 shutil.copyfileobj(raw, output)
     return file_name
+
+
+def uploadLargeFile(file_path, folder_id):
+    #GET SESSION URL
+    access_token = generate_access_token(SCOPES)
+    headers = {
+        'Authorization': 'Bearer ' + access_token['access_token']
+    }
+
+    file_name = os.path.basename(file_path)
+
+    if not os.path.exists(file_path):
+        raise Exception(f"{file_name} not found")
+
+    with open(file_path, 'rb') as upload:
+        media_content = upload.read()
+
+    request_body={
+        "@microsoft.graph.conflictBehavior": "rename",
+        "description": "description",
+        "fileSystemInfo": { "@odata.type": "microsoft.graph.fileSystemInfo" },
+        "name": file_name
+    }
+
+
+    response_upload_session = requests.post(
+        GRAPH_API_ENDPOINT + f'/me/drive/items/{folder_id}:/{file_name}:/createUploadSession',
+        headers = headers,
+        json=request_body
+    )
+
+    #UPLOAD DATA TO SESSION
+    with open(file_path, 'rb') as upload:
+        time_start = time.time();
+        total_file_size = os.path.getsize(file_path)
+        chunk_size = 327680 * 192
+        #chunk_size = 327680 * 50
+        print(f"Chunk size: {chunk_size/1024/1024}MiB")
+        chunk_number = total_file_size // chunk_size
+        chunk_leftover = total_file_size - (chunk_size * chunk_number)
+        counter = 0
+        print(f"Total Chunks: {chunk_number}")
+
+        while True:
+            chunk_data = upload.read(chunk_size)
+            start_index = counter * chunk_size 
+            end_index = start_index + chunk_size
+
+            if not chunk_data:
+                break
+            if counter == chunk_number:
+                end_index = start_index + chunk_leftover
+
+            headers = {
+                "Content-Length" : f"{chunk_size}",
+                "Content-range" : f"bytes {start_index}-{end_index-1}/{total_file_size}"
+            }
+
+            try:
+                upload_url = response_upload_session.json()['uploadUrl']
+                chunkl_data_upload_status = requests.put(upload_url,headers=headers,data=chunk_data)
+
+                if "createdBy" in chunkl_data_upload_status.json():
+                    print("DONE")
+                else:
+                    counter += 1   
+                    speed_estimate = (chunk_size * counter) / (time.time()-time_start) / 1024 / 1024
+                    speed_estimate = round(speed_estimate, 2)
+                    print(f"Upload Progress: {speed_estimate} MB/s {counter}/{chunk_number}")
+                                                                                                  
+
+            except Exception as e:
+                print(e)
+                break
