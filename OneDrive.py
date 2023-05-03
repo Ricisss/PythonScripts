@@ -7,16 +7,14 @@ import requests
 import shutil
 from tqdm.auto import tqdm
 from tqdm.utils import CallbackIOWrapper
-import httpx
 
 GRAPH_API_ENDPOINT = 'https://graph.microsoft.com/v1.0'
 SCOPES = ["User.ReadWrite"]
 remote_folder_name = "test"
 
-def generate_access_token(APP_ID, scopes):
-    if(APP_ID == ""):
-        with open('APP_ID', 'r') as file:
-            APP_ID = file.read()    
+def generate_access_token(scopes):
+    with open('APP_ID', 'r') as file:
+       APP_ID = file.read()    
         
     # Save Session Token as a token file
     access_token_cache = msal.SerializableTokenCache()
@@ -52,7 +50,7 @@ def generate_access_token(APP_ID, scopes):
     return token_response
 
 
-def uploadFile(file_path, file_name, APP_ID):
+def uploadFile(file_path, file_name):
     try:
         url = GRAPH_API_ENDPOINT + f"/me/drive/items/root:/{remote_folder_name}/{file_name}:/content"
         file_size = os.path.getsize(os.path.join(file_path, file_name))
@@ -65,10 +63,10 @@ def uploadFile(file_path, file_name, APP_ID):
                 reader_wrapper = CallbackIOWrapper(t.update, f, "read")
                 requests.put(url, headers=headers, data=reader_wrapper)
     except:
-         print("An exception occurred")
+         print(f"An exception occurred while trying to upload file : {file_name}")
 
             
-def downloadFile(file_id, APP_ID):
+def downloadFile(file_id):
     access_token = generate_access_token(APP_ID, scopes=SCOPES)
     headers = {
         'Authorization': 'Bearer ' + access_token['access_token']
