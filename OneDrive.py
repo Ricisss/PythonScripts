@@ -14,7 +14,7 @@ remote_folder_name = "test"
 
 def generate_access_token(scopes):
     with open('APP_ID', 'r') as file:
-       APP_ID = file.read()    
+       APP_ID = file.read().strip()    
         
     # Save Session Token as a token file
     access_token_cache = msal.SerializableTokenCache()
