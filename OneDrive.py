@@ -66,7 +66,7 @@ def uploadFile(file_path, file_name):
          print(f"An exception occurred while trying to upload file : {file_name}")
 
             
-def downloadFile(file_id):
+def downloadFile(file_id, save_location):
     access_token = generate_access_token(APP_ID, scopes=SCOPES)
     headers = {
         'Authorization': 'Bearer ' + access_token['access_token']
