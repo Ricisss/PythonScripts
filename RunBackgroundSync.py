@@ -1,3 +1,3 @@
 from WatchAndUploadFiles import WatchPath
 
-WatchPath("/SD", "")
+WatchPath("D:/python", "")

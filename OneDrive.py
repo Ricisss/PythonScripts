@@ -13,7 +13,11 @@ GRAPH_API_ENDPOINT = 'https://graph.microsoft.com/v1.0'
 SCOPES = ["User.ReadWrite"]
 remote_folder_name = "test"
 
-def generate_access_token(app_id, scopes):
+def generate_access_token(APP_ID, scopes):
+    if(APP_ID == ""):
+        with open('APP_ID', 'r') as file:
+            APP_ID = file.read()    
+        
     # Save Session Token as a token file
     access_token_cache = msal.SerializableTokenCache()
 
@@ -28,7 +32,7 @@ def generate_access_token(app_id, scopes):
             access_token_cache = msal.SerializableTokenCache()
 
     # assign a SerializableTokenCache object to the client instance
-    client = msal.PublicClientApplication(client_id=app_id, token_cache=access_token_cache)
+    client = msal.PublicClientApplication(client_id=APP_ID, token_cache=access_token_cache)
 
     accounts = client.get_accounts()
     if accounts:
@@ -49,16 +53,19 @@ def generate_access_token(app_id, scopes):
 
 
 def uploadFile(file_path, file_name, APP_ID):
-    url = GRAPH_API_ENDPOINT + f"/me/drive/items/root:/{remote_folder_name}/{file_name}:/content"
-    file_size = os.path.getsize(f"{file_path}{file_name}")
-    headers = {
-        "Authorization": "bearer " + generate_access_token(APP_ID, SCOPES)['access_token'],
-            'Content-Length': str(file_size)
-        }
-    with open(f"{file_path}{file_name}", 'rb') as f:
-        with tqdm(desc=f"Uploading {file_name}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as t:
-            reader_wrapper = CallbackIOWrapper(t.update, f, "read")
-            requests.put(url, headers=headers, data=reader_wrapper)
+    try:
+        url = GRAPH_API_ENDPOINT + f"/me/drive/items/root:/{remote_folder_name}/{file_name}:/content"
+        file_size = os.path.getsize(os.path.join(file_path, file_name))
+        headers = {
+            "Authorization": "bearer " + generate_access_token(APP_ID, SCOPES)['access_token'],
+                'Content-Length': str(file_size)
+            }
+        with open(os.path.join(file_path, file_name), 'rb') as f:
+            with tqdm(desc=f"Uploading {file_name}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as t:
+                reader_wrapper = CallbackIOWrapper(t.update, f, "read")
+                requests.put(url, headers=headers, data=reader_wrapper)
+    except:
+         print("An exception occurred")
 
             
 def downloadFile(file_id, APP_ID):
