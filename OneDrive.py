@@ -67,7 +67,7 @@ def uploadFile(file_path, file_name):
 
             
 def downloadFile(file_id, save_location):
-    access_token = generate_access_token(APP_ID, scopes=SCOPES)
+    access_token = generate_access_token(scopes=SCOPES)
     headers = {
         'Authorization': 'Bearer ' + access_token['access_token']
     }
