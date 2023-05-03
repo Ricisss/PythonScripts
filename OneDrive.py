@@ -88,3 +88,4 @@ def downloadFile(file_id, save_location):
            # save the output to a file
             with open(os.path.join(save_location, file_name), 'wb') as output:
                 shutil.copyfileobj(raw, output)
+    return file_name
