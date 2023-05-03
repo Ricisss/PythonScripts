@@ -4,8 +4,6 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from OneDrive import uploadFile
 
-path = 'D:\python'
-
 def WatchPath(WATCH_PATH, APP_ID):
     class NewFileHandler(FileSystemEventHandler):
         def on_created(self, event):
