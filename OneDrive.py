@@ -1,4 +1,3 @@
-import webbrowser
 from datetime import datetime
 import json
 import os
@@ -45,7 +44,6 @@ def generate_access_token(scopes):
         flow = client.initiate_device_flow(scopes=scopes)
         print('user_code: ' + flow['user_code'])
         print('URL: ' + 'https://microsoft.com/devicelogin')
-        webbrowser.open('https://microsoft.com/devicelogin')
         token_response = client.acquire_token_by_device_flow(flow)
 
     with open('ms_graph_api_token.json', 'w') as _f:
