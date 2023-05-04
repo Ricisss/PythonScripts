@@ -13,8 +13,8 @@ import concurrent.futures
 GRAPH_API_ENDPOINT = 'https://graph.microsoft.com/v1.0'
 SCOPES = ["User.ReadWrite"]
 remote_folder_name = "test"
-#hunk_size = 327680 * 192
-chunk_size = 327680 * 10
+chunk_size = 327680 * 192
+#chunk_size = 327680 * 10
 
 def generate_access_token(scopes):
     with open('APP_ID', 'r') as file:
